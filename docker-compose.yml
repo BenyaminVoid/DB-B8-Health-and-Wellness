@@ -1,0 +1,49 @@
+
+version: '3.8'
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: mosquitto
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+
+  mongodb:
+    image: mongo:5.0 
+    container_name: mongodb
+    ports:
+      - "27018:27017" 
+    volumes:
+      - mongodb_data:/data/db
+
+  neo4j:
+    image: neo4j:4.4
+    container_name: neo4j
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_AUTH=neo4j/my-secret-password
+    volumes:
+      - neo4j_data:/data
+
+  php-apache:
+    build:
+      context: ./php
+    container_name: php-frontend
+    ports:
+      - "8080:80"
+    volumes:
+      - ./health_data.db:/var/www/health_data.db
+      - ./php/src:/var/www/html
+    depends_on:
+      - mongodb
+
+volumes:
+  mongodb_data:
+  neo4j_data:
