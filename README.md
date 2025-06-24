@@ -1,63 +1,113 @@
-# Project: Integration of MQTT and Python for Big Data Analysis and Storage (DB-B8 Health and Wellness)
+DB-B8: IoT Health & Wellness Data Platform
+1. Project Overview
 
-## 1. Project Description
+This project implements a robust, real-time data engineering pipeline designed to handle data from IoT wearable devices. It successfully demonstrates the collection, processing, and strategic storage of simulated health data (heart rate, physical activity) into three distinct types of databases, showcasing a polyglot persistence approach suitable for modern Big Data applications.
 
-[cite_start]This project successfully implements a system to collect, process, and store large volumes of data from simulated IoT wearable devices. The system uses the MQTT protocol for real-time data ingestion and Python for processing. [cite_start]Based on the data topic, it is then stored in three different database platforms: SQLite (SQL), MongoDB (NoSQL), and Neo4j (Graph).
+The entire system is containerized using Docker and Docker Compose, ensuring easy deployment and scalability.
+2. Key Features
 
-## 2. System Architecture
+    Real-time Data Ingestion: Uses the lightweight MQTT protocol to handle high-volume data streams from multiple IoT devices.
+    Polyglot Persistence: Strategically stores different data types in the most suitable database.
+    Topic-Based Routing: A Python subscriber intelligently routes incoming data to the correct database based on the MQTT topic.
+    Scalable Architecture: Fully containerized with Docker, allowing for easy scaling of services.
+    Live Data Dashboard: A simple web-based frontend built with PHP to visualize the stored data in real-time.
+    Graph-Based Data Modeling: Uses Neo4j to model and visualize the relationships between devices and the data they produce.
 
-The system follows a publisher-subscriber architecture, orchestrated with Docker to ensure modularity and ease of deployment.
+3. System Architecture
 
-**Data Flow:**
-1.  **Publisher (`publisher.py`):** A Python script simulates one or more wearable devices, generating health data (heart rate, activity) and publishing it to specific topics on an MQTT broker.
-2.  **MQTT Broker (Eclipse Mosquitto):** A Docker container running Mosquitto receives the data from the publisher and forwards it to any subscribed clients.
-3.  **Subscriber (`subscriber.py`):** A second Python script subscribes to the MQTT topics. It receives the data, processes it, and routes it to the appropriate database based on the topic.
-4.  **Databases (Dockerized):**
-    * Heart rate data is stored in **SQLite** for structured, time-series analysis.
-    * Complex activity data (steps, calories) is stored in **MongoDB** as JSON-like documents.
-    * Relationships between devices and the data they produce are stored in **Neo4j**, our graph database.
-5.  **Web Frontend (PHP/Apache):** A Dockerized web server reads data from SQLite and MongoDB to display a live dashboard.
+The project follows a classic publisher-subscriber pattern. The architecture is designed to be decoupled and resilient.
+Data Flow
 
-## 3. Technologies Used
+    The Publisher (publisher.py) script simulates IoT devices and sends data to the MQTT Broker.
+    The MQTT Broker (Mosquitto) receives the data and delivers it to the subscribed Python Subscriber.
+    The Subscriber (subscriber.py) processes the message and, based on the topic, routes the data to the correct database.
+    The PHP Frontend reads data from the databases (SQLite and MongoDB) to display the live dashboard to the user.
 
-* **Backend:** Python 3
-* **Messaging:** Paho MQTT, Eclipse Mosquitto
-* **Databases:** SQLite, MongoDB 5.0, Neo4j 4.4
-* **Frontend:** PHP, HTML/CSS
-* **Containerization:** Docker & Docker Compose
+Component Breakdown
 
-## 4. Installation and Use
+    publisher.py: A Python script that simulates multiple wearable devices, generating random but realistic health data and publishing it to the MQTT broker.
+    subscriber.py: The core processing engine. This Python script subscribes to all sensor topics, receives the data, and executes the logic to store it in the appropriate database.
+    Eclipse Mosquitto: A lightweight MQTT broker running in a Docker container that handles message queuing and delivery.
+    Databases: All databases run in their own Docker containers:
+        MongoDB: Stores complex, JSON-like documents for physical activity.
+        Neo4j: Stores a graph of devices and their produced readings.
+        SQLite: A file-based SQL database for structured heart rate data.
+    PHP Frontend: An Apache server with PHP that queries the databases and presents a simple, real-time dashboard.
 
-[cite_start]Instructions for setting up and running the project.
+4. Database Schema and Rationale
 
-**Prerequisites:**
-* Docker
-* Docker Compose
-* Python 3
+A key objective of this project was to use the best database for the job.
 
-**Running the Project:**
+    SQL (SQLite)
+        Data Stored: Heart Rate Readings (timestamp, device_id, heart_rate).
+        Rationale: Heart rate data is highly structured and uniform. A relational SQL database is perfect for querying and aggregating this kind of time-series data efficiently.
+    NoSQL Document (MongoDB)
+        Data Stored: Physical Activity Logs (JSON documents including timestamp, device_id, activity_type, and nested metrics like steps and calories).
+        Rationale: Activity data can be more complex and may evolve over time (e.g., adding new metrics). MongoDB's flexible, document-based schema is ideal for storing this semi-structured data without requiring schema migrations.
+    NoSQL Graph (Neo4j)
+        Data Stored: A graph of (:Device) nodes connected to (:Reading) nodes via [:PRODUCED] relationships.
+        Rationale: A graph database excels at managing and querying relationships. This effectively demonstrates how one could model a large network of devices and their interactions for more complex analysis.
 
-1.  **Clone the Repository:**
-    ```bash
-    git clone <your-repo-url>
-    cd <repository-name>
-    ```
-2.  **Configure Passwords:** In the `docker-compose.yml` file, set a password for Neo4j in the `NEO4J_AUTH` environment variable. Ensure the same password is set for `NEO4J_PASSWORD` in the `subscriber.py` file.
+5. Technology Stack
 
-3.  **Start all services:**
-    ```bash
+    Backend: Python 3
+    Libraries: Paho MQTT, PyMongo, Neo4j Driver, python-dotenv
+    Databases: SQLite 3, MongoDB 5.0, Neo4j 4.4
+    Frontend: PHP 8, Apache Server
+    Messaging: Eclipse Mosquitto
+    Containerization: Docker & Docker Compose
+
+6. Getting Started
+
+Follow these instructions to set up and run the project locally.
+Prerequisites
+
+    Docker Desktop installed and running.
+    Python 3 installed.
+
+Installation & Setup
+
+    Clone the Repository:
+    Bash
+
+git clone <your-repo-url>
+cd <repository-name>
+
+Install Python Dependencies:
+Bash
+
+pip install paho-mqtt pymongo neo4j python-dotenv
+
+Create Environment File:
+For better security, create a new file named .env in the project's root directory. Add the following line to it, choosing a secure password:
+
+NEO4J_PASS=my-secret-password
+
+Start the System with Docker Compose:
+This command will build the custom PHP image and start all services in the background.
+Bash
+
     docker-compose up --build -d
-    ```
-4.  **Run the Python Scripts:** Open two separate terminals from the project's root directory.
-    * In terminal 1, start the subscriber:
-        ```bash
-        python subscriber.py
-        ```
-    * In terminal 2, start the publisher:
-        ```bash
-        python publisher.py
-        ```
-5.  **View the Dashboard:** Open your web browser and navigate to:
-    `http://localhost:8080`
 
-## 5. Project Structure
+Running the Application
+
+    Start the Subscriber:
+    Open a new terminal in the project directory and run:
+    Bash
+
+python subscriber.py
+
+Start the Publisher:
+Open a second terminal and run:
+Bash
+
+    python publisher.py
+
+    View the Live Dashboard:
+    Open your web browser and navigate to: http://localhost:8080
+
+7. Future Work
+
+    Real-time Alerts: Implement a component that analyzes data as it arrives and sends an alert if an abnormal reading is detected.
+    Advanced Analytics: Use the graph database to perform more complex queries, such as identifying devices that frequently lose connection or correlating activity levels.
+    Data Visualization: Enhance the frontend with JavaScript libraries like Chart.js to create dynamic charts and graphs of the incoming data.
