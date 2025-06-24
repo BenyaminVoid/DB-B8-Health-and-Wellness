@@ -1,4 +1,3 @@
-DB-B8: IoT Health & Wellness Data Platform
 1. Project Overview
 
 This project implements a robust, real-time data engineering pipeline designed to handle data from IoT wearable devices. It successfully demonstrates the collection, processing, and strategic storage of simulated health data (heart rate, physical activity) into three distinct types of databases, showcasing a polyglot persistence approach suitable for modern Big Data applications.
